@@ -1,0 +1,63 @@
+import java.util.*;
+
+ public class DictionaryHashSet {
+     private HashSet<String> dictionary;
+
+     public DictionaryHashSet() {
+         dictionary = new HashSet<>();
+     }
+
+     // Add a word to dictionary
+     public void addWord(String word) {
+         dictionary.add(word.toLowerCase());
+     }
+
+     // Check if word exists
+     public boolean searchWord(String word) {
+         return dictionary.contains(word.toLowerCase());
+     }
+
+     // Get suggestions for misspelled words
+     public List<String> getSuggestions(String word) {
+         word = word.toLowerCase();
+         List<String> suggestions = new ArrayList<>();
+
+         // Generate words with one character changed
+         for (int i = 0; i < word.length(); i++) {
+             char[] chars = word.toCharArray();
+
+char[] chars = word.toCharArray();
+             for (char c = 'a'; c <= 'z'; c++) {
+                 if (c == chars[i]) continue;
+                 chars[i] = c;
+                 String newWord = new String(chars);
+                 if (dictionary.contains(newWord)) {
+                     suggestions.add(newWord);
+                 }
+             }
+         }
+
+         // Generate words with one character deleted
+         for (int i = 0; i < word.length(); i++) {
+             String newWord = word.substring(0, i) + word.substring(i + 1);
+             if (dictionary.contains(newWord)) {
+                 suggestions.add(newWord);
+             }
+         }
+
+         // Generate words with one character added
+         for (int i = 0; i <= word.length(); i++) {
+             for (char c = 'a'; c <= 'z'; c++) {
+                 String newWord = word.substring(0, i) + c + word.substring(i);
+                 if (dictionary.contains(newWord)) {
+                     suggestions.add(newWord);
+                 }
+             }
+         }
+
+         // Remove duplicates and limit to 5 suggestions
+         Set<String> uniqueSuggestions = new HashSet<>(suggestions);
+         List<String> result = new ArrayList<>(uniqueSuggestions);
+         return result.size() > 5 ? result.subList(0, 5) : result;
+     }
+ }
