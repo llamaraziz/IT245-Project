@@ -1,0 +1,150 @@
+
+
+
+/**
+ * TrieDictionary (Solution 2)
+ * * This class implements a Dictionary using a Trie (Prefix Tree) data structure.
+ * It supports fast word insertion, exact word search, and prefix-based 
+ * auto-completion suggestions.
+ * * Time Complexity:
+ * - Insert: O(L) where L is the length of the word.
+ * - Search: O(L) where L is the length of the word.
+ * - Prefix Suggestions: O(P + K) where P is the prefix length and K is the 
+ * number of characters in the suggested words (capped at 5 suggestions).
+ */
+public class TrieDictionary {
+ 
+   // Root node of the Trie
+   private TrieNode root;
+ 
+   /**
+    * Constructor initializes the Trie with an empty root node.
+    */
+   public TrieDictionary() {
+       root = new TrieNode();
+   }
+ 
+   /**
+    * Inserts a word into the Trie.
+    * Converts the word to lowercase to ensure case-insensitive lookups.
+    *
+    * @param word The word to be inserted.
+    */
+   public void insert(String word) {
+       TrieNode current = root;
+       // Traverse through each character of the word
+       for (char ch : word.toLowerCase().toCharArray()) {
+           // If the child node for the character doesn't exist, create it.
+           // computeIfAbsent adds a new TrieNode if the key is not present.
+           current = current.children.computeIfAbsent(ch, c -> new TrieNode());
+       }
+       // Mark the last node as the end of a valid word
+       current.isEndOfWord = true;
+   }
+ 
+   /**
+    * Searches for an exact word in the Trie.
+    * Performs a case-insensitive search.
+    *
+    * @param word The word to search for.
+    * @return true if the word exists in the dictionary, false otherwise.
+    */
+   public boolean search(String word) {
+       TrieNode node = searchPrefix(word.toLowerCase());
+       // The word exists only if the prefix path exists AND the node is marked as a word end.
+       return node != null && node.isEndOfWord;
+   }
+ 
+   /**
+    * Retrieves up to 5 words from the dictionary that start with the given prefix.
+    * This is useful for auto-complete and suggestion features.
+    *
+    * @param prefix The prefix to search for.
+    * @return A list of up to 5 suggested words starting with the prefix.
+    * Returns an empty list if no words match or the prefix doesn't exist.
+    */
+   public List<String> getWordsWithPrefix(String prefix) {
+       List<String> suggestions = new ArrayList<>();
+       // First, locate the node representing the end of the given prefix.
+       TrieNode prefixNode = searchPrefix(prefix.toLowerCase());
+       
+       // If the prefix doesn't exist in the Trie, return an empty list.
+       if (prefixNode == null) {
+           return suggestions;
+       }
+ 
+       // Perform Depth-First Search (DFS) starting from the prefix node
+       // to collect all valid words derived from this prefix.
+       dfs(prefixNode, prefix.toLowerCase(), suggestions);
+       return suggestions;
+   }
+ 
+   // ======================== HELPER METHODS ========================
+ 
+   /**
+    * Traverses the Trie following the given prefix string.
+    *
+    * @param prefix The prefix to traverse.
+    * @return The TrieNode corresponding to the last character of the prefix,
+    * or null if the prefix path does not exist in the Trie.
+    */
+   private TrieNode searchPrefix(String prefix) {
+       TrieNode current = root;
+       for (char ch : prefix.toLowerCase().toCharArray()) {
+           current = current.children.get(ch);
+           // If a character in the prefix is missing, the prefix doesn't exist.
+           if (current == null) {
+               return null;
+           }
+       }
+       return current;
+   }
+ 
+   /**
+    * Performs a recursive Depth-First Search (DFS) to collect words from a given node.
+    * The search stops early once we have found 5 suggestions to maintain performance.
+    *
+    * @param node        The current Trie node being visited.
+    * @param currentWord The word built so far (including the prefix).
+    * @param result      The list collecting the suggested words.
+    */
+   private void dfs(TrieNode node, String currentWord, List<String> result) {
+       // Base case: Stop recursion if we already have 5 suggestions.
+       if (result.size() >= 5) {
+           return;
+       }
+ 
+       // If the current node represents the end of a word, add it to the results.
+       if (node.isEndOfWord) {
+           result.add(currentWord);
+       }
+ 
+       // Recur for all children (sorted alphabetically by default due to TreeMap/HashMap iteration,
+       // but we'll just iterate through the entry set).
+       for (Map.Entry<Character, TrieNode> entry : node.children.entrySet()) {
+           // Recursively call DFS for each child, appending the child's character to the current word.
+           dfs(entry.getValue(), currentWord + entry.getKey(), result);
+       }
+   }
+ 
+   // ======================== INNER NODE CLASS ========================
+ 
+   /**
+    * Represents a single node in the Trie.
+    * Each node holds a map to its children and a flag indicating if it is the end of a word.
+    */
+   private static class TrieNode {
+       // HashMap allows O(1) average access to child nodes.
+       // Using TreeMap would give sorted suggestions but with O(log n) access.
+       Map<Character, TrieNode> children;
+       boolean isEndOfWord;
+ 
+       /**
+        * Constructor initializes the children map and sets the end-of-word flag to false.
+        */
+       public TrieNode() {
+           this.children = new HashMap<>();
+           this.isEndOfWord = false;
+       }
+   }
+}
